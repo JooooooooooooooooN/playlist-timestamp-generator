@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Audio Timestamp Generator</title>
+    <meta
+      name="description"
+      content="오디오 파일을 순서대로 넣으면 유튜브 챕터용 타임스탬프를 자동으로 생성합니다."
+    >
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">Audio Timestamp Generator</p>
+          <h1>오디오 파일만 넣으면 타임스탬프가 바로 완성됩니다.</h1>
+          <p class="lede">
+            MP3, WAV, M4A 같은 음원 파일을 순서대로 올리면 시작 시간이 자동 계산됩니다.
+            파일 이름을 제목으로 인식하고, 필요하면 직접 수정할 수 있습니다.
+          </p>
+          <div class="hero-points">
+            <span>유튜브 챕터용</span>
+            <span>브라우저에서 바로 사용</span>
+            <span>업로드 없이 로컬 처리</span>
+          </div>
+        </div>
+        <img
+          class="hero-image"
+          alt="Turntable and audio mixer"
+          src="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?auto=format&fit=crop&w=1200&q=80"
+        >
+      </section>
+
+      <section class="workspace">
+        <div class="drop-zone" id="dropZone">
+          <input id="fileInput" type="file" accept="audio/*" multiple>
+          <div class="drop-copy">
+            <strong>오디오 파일 선택 또는 드래그</strong>
+            <span>여러 파일을 한 번에 넣고 표에서 순서를 바꿀 수 있습니다.</span>
+          </div>
+          <div class="drop-actions">
+            <button class="secondary" type="button" id="pickFiles">파일 선택</button>
+            <button class="secondary" type="button" id="loadSample">샘플 보기</button>
+          </div>
+        </div>
+
+        <div class="toolbar">
+          <label>
+            시작 오프셋
+            <input id="offsetInput" type="text" value="00:00" inputmode="numeric" aria-label="시작 오프셋">
+          </label>
+
+          <label>
+            출력 형식
+            <select id="formatSelect" aria-label="출력 형식">
+              <option value="space">00:00 곡명</option>
+              <option value="dash">00:00 - 곡명</option>
+            </select>
+          </label>
+
+          <label>
+            마지막 문구
+            <input id="repeatLabel" type="text" value="repeat" aria-label="마지막 문구">
+          </label>
+
+          <label class="check-row">
+            <input id="includeRepeat" type="checkbox" checked>
+            마지막 줄 자동 추가
+          </label>
+
+          <button class="secondary" type="button" id="clearAll">초기화</button>
+        </div>
+
+        <section class="panel" aria-live="polite">
+          <div class="section-title">
+            <h2>플레이리스트</h2>
+            <p id="summary">아직 추가된 오디오 파일이 없습니다.</p>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>순서</th>
+                  <th>제목</th>
+                  <th>길이</th>
+                  <th>시작</th>
+                  <th>관리</th>
+                </tr>
+              </thead>
+              <tbody id="trackList">
+                <tr class="empty-row">
+                  <td colspan="5">오디오 파일을 넣으면 여기에 목록이 생깁니다.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="section-title output-title">
+            <div>
+              <h2>생성된 타임스탬프</h2>
+              <p>복사해서 유튜브 설명란이나 고정 댓글에 바로 붙여넣을 수 있습니다.</p>
+            </div>
+            <button type="button" id="copyOutput">바로 복사</button>
+          </div>
+
+          <textarea id="outputText" spellcheck="false" placeholder="00:00 Silver Bloom"></textarea>
+          <p class="hint" id="copyStatus">오디오 파일은 업로드되지 않으며 브라우저 안에서만 처리됩니다.</p>
+        </section>
+
+        <section class="info-grid">
+          <article class="info-block">
+            <h2>How It Works</h2>
+            <p>1. 오디오 파일 추가</p>
+            <p>2. 제목 확인 또는 수정</p>
+            <p>3. 타임스탬프 바로 복사</p>
+          </article>
+
+          <article class="info-block">
+            <h2>Privacy</h2>
+            <p>파일은 서버로 전송되지 않습니다.</p>
+            <p>길이 계산과 텍스트 생성은 브라우저 안에서만 이루어집니다.</p>
+          </article>
+        </section>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
