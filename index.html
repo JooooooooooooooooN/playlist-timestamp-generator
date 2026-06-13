@@ -87,17 +87,8 @@
               <input id="playlistName" type="text" placeholder="예: 2026-06 Suno Mix">
             </label>
 
-            <label>
-              저장된 플레이리스트
-              <select id="savedPlaylistSelect" aria-label="저장된 플레이리스트">
-                <option value="">저장된 플레이리스트 없음</option>
-              </select>
-            </label>
-
             <div class="save-actions">
               <button type="button" id="savePlaylist">저장</button>
-              <button class="secondary" type="button" id="loadPlaylist">불러오기</button>
-              <button class="secondary" type="button" id="deletePlaylist">삭제</button>
             </div>
           </div>
 
@@ -105,6 +96,10 @@
             전체 메모
             <textarea id="playlistMemo" spellcheck="false" placeholder="예: 새벽 감성 믹스, 썸네일은 파스텔톤"></textarea>
           </label>
+
+          <div class="saved-list" id="savedPlaylistList" aria-live="polite">
+            <p class="saved-empty">저장된 플레이리스트가 없습니다.</p>
+          </div>
         </section>
 
         <section class="panel" aria-live="polite">

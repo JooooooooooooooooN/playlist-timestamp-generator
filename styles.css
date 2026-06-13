@@ -195,7 +195,7 @@ h1 {
 
 .save-grid {
   display: grid;
-  grid-template-columns: minmax(180px, 1fr) minmax(180px, 1fr) auto;
+  grid-template-columns: minmax(180px, 1fr) auto;
   gap: 12px;
   align-items: end;
   padding: 8px 18px 14px;
@@ -214,6 +214,56 @@ h1 {
   width: 100%;
   min-height: 92px;
   margin: 0;
+}
+
+.saved-list {
+  display: grid;
+  gap: 10px;
+  padding: 14px 18px 0;
+}
+
+.saved-empty {
+  margin: 0;
+  padding: 12px;
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.saved-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.saved-item.is-active {
+  border-color: var(--accent);
+  background: var(--soft);
+}
+
+.saved-item strong,
+.saved-item span {
+  display: block;
+}
+
+.saved-item strong {
+  margin-bottom: 4px;
+}
+
+.saved-item span {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.saved-item-actions {
+  display: flex;
+  gap: 8px;
 }
 
 label {
@@ -464,6 +514,18 @@ textarea {
   }
 
   .save-actions button {
+    flex: 1 1 120px;
+  }
+
+  .saved-item {
+    grid-template-columns: 1fr;
+  }
+
+  .saved-item-actions {
+    flex-wrap: wrap;
+  }
+
+  .saved-item-actions button {
     flex: 1 1 120px;
   }
 

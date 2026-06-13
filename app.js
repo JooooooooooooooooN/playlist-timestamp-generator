@@ -14,10 +14,8 @@ const includeRepeat = document.querySelector("#includeRepeat");
 const repeatLabel = document.querySelector("#repeatLabel");
 const playlistName = document.querySelector("#playlistName");
 const playlistMemo = document.querySelector("#playlistMemo");
-const savedPlaylistSelect = document.querySelector("#savedPlaylistSelect");
 const savePlaylist = document.querySelector("#savePlaylist");
-const loadPlaylist = document.querySelector("#loadPlaylist");
-const deletePlaylist = document.querySelector("#deletePlaylist");
+const savedPlaylistList = document.querySelector("#savedPlaylistList");
 
 const storageKey = "playlistTimestampGenerator.savedPlaylists.v1";
 
@@ -35,6 +33,7 @@ const sampleTracks = [
 
 let tracks = [];
 let audioContext;
+let activePlaylistId = null;
 
 function getSavedPlaylists() {
   try {
@@ -50,21 +49,41 @@ function setSavedPlaylists(playlists) {
   renderSavedPlaylists();
 }
 
-function renderSavedPlaylists(selectedId = savedPlaylistSelect.value) {
+function formatSavedDate(value) {
+  if (!value) {
+    return "";
+  }
+
+  return new Date(value).toLocaleString("ko-KR", {
+    dateStyle: "short",
+    timeStyle: "short",
+  });
+}
+
+function renderSavedPlaylists() {
   const playlists = getSavedPlaylists();
 
   if (playlists.length === 0) {
-    savedPlaylistSelect.innerHTML = '<option value="">저장된 플레이리스트 없음</option>';
+    savedPlaylistList.innerHTML = '<p class="saved-empty">저장된 플레이리스트가 없습니다.</p>';
     return;
   }
 
-  savedPlaylistSelect.innerHTML = playlists
-    .map((playlist) => `<option value="${escapeHtml(playlist.id)}">${escapeHtml(playlist.name)}</option>`)
+  savedPlaylistList.innerHTML = playlists
+    .map(
+      (playlist) => `
+        <article class="saved-item ${playlist.id === activePlaylistId ? "is-active" : ""}">
+          <div>
+            <strong>${escapeHtml(playlist.name)}</strong>
+            <span>${playlist.tracks?.length || 0}곡 · ${escapeHtml(formatSavedDate(playlist.updatedAt))}</span>
+          </div>
+          <div class="saved-item-actions">
+            <button class="secondary" type="button" data-saved-action="load" data-id="${escapeHtml(playlist.id)}">불러오기</button>
+            <button class="secondary" type="button" data-saved-action="delete" data-id="${escapeHtml(playlist.id)}">삭제</button>
+          </div>
+        </article>
+      `
+    )
     .join("");
-
-  if (playlists.some((playlist) => playlist.id === selectedId)) {
-    savedPlaylistSelect.value = selectedId;
-  }
 }
 
 function getAudioContext() {
@@ -239,6 +258,7 @@ async function addFiles(fileList) {
     return;
   }
 
+  activePlaylistId = null;
   setStatus(`${files.length}개 파일의 길이를 읽는 중입니다...`);
 
   for (const file of files) {
@@ -257,6 +277,7 @@ async function addFiles(fileList) {
   }
 
   render();
+  renderSavedPlaylists();
   setStatus("타임스탬프가 업데이트되었습니다.");
 }
 
@@ -271,6 +292,7 @@ function moveTrack(from, to) {
 }
 
 function loadSampleTracks() {
+  activePlaylistId = null;
   tracks = sampleTracks.map((track) => ({
     id: createId(),
     title: track.title,
@@ -280,6 +302,7 @@ function loadSampleTracks() {
   }));
 
   render();
+  renderSavedPlaylists();
   setStatus("샘플 플레이리스트를 불러왔습니다.");
 }
 
@@ -317,9 +340,8 @@ function saveCurrentPlaylist() {
   }
 
   const playlists = getSavedPlaylists();
-  const selectedId = savedPlaylistSelect.value;
-  const existingIndex = playlists.findIndex((playlist) => playlist.id === selectedId);
-  const snapshot = createPlaylistSnapshot(existingIndex >= 0 ? selectedId : undefined);
+  const existingIndex = playlists.findIndex((playlist) => playlist.id === activePlaylistId);
+  const snapshot = createPlaylistSnapshot(existingIndex >= 0 ? activePlaylistId : undefined);
 
   if (existingIndex >= 0) {
     playlists[existingIndex] = snapshot;
@@ -327,20 +349,22 @@ function saveCurrentPlaylist() {
     playlists.unshift(snapshot);
   }
 
+  activePlaylistId = snapshot.id;
   setSavedPlaylists(playlists);
-  savedPlaylistSelect.value = snapshot.id;
+  playlistName.value = snapshot.name;
   setStatus(`"${snapshot.name}" 플레이리스트를 저장했습니다.`);
 }
 
-function loadSelectedPlaylist() {
+function loadSavedPlaylist(id) {
   const playlists = getSavedPlaylists();
-  const playlist = playlists.find((item) => item.id === savedPlaylistSelect.value);
+  const playlist = playlists.find((item) => item.id === id);
 
   if (!playlist) {
     setStatus("불러올 저장된 플레이리스트가 없습니다.", true);
     return;
   }
 
+  activePlaylistId = playlist.id;
   playlistName.value = playlist.name || "";
   playlistMemo.value = playlist.memo || "";
   offsetInput.value = playlist.settings?.offset || "00:00";
@@ -356,13 +380,13 @@ function loadSelectedPlaylist() {
   }));
 
   render();
+  renderSavedPlaylists();
   setStatus(`"${playlist.name}" 플레이리스트를 불러왔습니다.`);
 }
 
-function deleteSelectedPlaylist() {
-  const selectedId = savedPlaylistSelect.value;
+function deleteSavedPlaylist(id) {
   const playlists = getSavedPlaylists();
-  const playlist = playlists.find((item) => item.id === selectedId);
+  const playlist = playlists.find((item) => item.id === id);
 
   if (!playlist) {
     setStatus("삭제할 저장된 플레이리스트가 없습니다.", true);
@@ -373,15 +397,32 @@ function deleteSelectedPlaylist() {
     return;
   }
 
-  setSavedPlaylists(playlists.filter((item) => item.id !== selectedId));
+  if (activePlaylistId === id) {
+    activePlaylistId = null;
+  }
+
+  setSavedPlaylists(playlists.filter((item) => item.id !== id));
   setStatus(`"${playlist.name}" 저장본을 삭제했습니다.`);
 }
 
 pickFiles.addEventListener("click", () => fileInput.click());
 loadSample.addEventListener("click", loadSampleTracks);
 savePlaylist.addEventListener("click", saveCurrentPlaylist);
-loadPlaylist.addEventListener("click", loadSelectedPlaylist);
-deletePlaylist.addEventListener("click", deleteSelectedPlaylist);
+savedPlaylistList.addEventListener("click", (event) => {
+  const button = event.target.closest("button");
+
+  if (!button) {
+    return;
+  }
+
+  if (button.dataset.savedAction === "load") {
+    loadSavedPlaylist(button.dataset.id);
+  }
+
+  if (button.dataset.savedAction === "delete") {
+    deleteSavedPlaylist(button.dataset.id);
+  }
+});
 
 fileInput.addEventListener("change", (event) => {
   addFiles(event.target.files);
@@ -463,9 +504,11 @@ copyOutput.addEventListener("click", async () => {
 
 clearAll.addEventListener("click", () => {
   tracks = [];
+  activePlaylistId = null;
   playlistName.value = "";
   playlistMemo.value = "";
   render();
+  renderSavedPlaylists();
   setStatus("목록을 비웠습니다.");
 });
 
