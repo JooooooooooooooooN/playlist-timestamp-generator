@@ -15,6 +15,7 @@ const repeatLabel = document.querySelector("#repeatLabel");
 const playlistName = document.querySelector("#playlistName");
 const playlistMemo = document.querySelector("#playlistMemo");
 const savePlaylist = document.querySelector("#savePlaylist");
+const saveStatus = document.querySelector("#saveStatus");
 const savedPlaylistList = document.querySelector("#savedPlaylistList");
 
 const storageKey = "playlistTimestampGenerator.savedPlaylists.v1";
@@ -44,9 +45,20 @@ function getSavedPlaylists() {
   }
 }
 
+function setSaveStatus(message, isError = false) {
+  saveStatus.textContent = message;
+  saveStatus.classList.toggle("is-error", isError);
+}
+
 function setSavedPlaylists(playlists) {
-  localStorage.setItem(storageKey, JSON.stringify(playlists));
-  renderSavedPlaylists();
+  try {
+    localStorage.setItem(storageKey, JSON.stringify(playlists));
+    renderSavedPlaylists();
+    return true;
+  } catch (error) {
+    setSaveStatus("브라우저 저장소에 저장하지 못했습니다. 시크릿 모드나 저장소 권한을 확인해 주세요.", true);
+    return false;
+  }
 }
 
 function formatSavedDate(value) {
@@ -334,8 +346,8 @@ function createPlaylistSnapshot(existingId) {
 }
 
 function saveCurrentPlaylist() {
-  if (tracks.length === 0 && !playlistMemo.value.trim()) {
-    setStatus("저장할 플레이리스트나 메모가 없습니다.", true);
+  if (tracks.length === 0 && !playlistName.value.trim() && !playlistMemo.value.trim()) {
+    setSaveStatus("저장할 이름, 메모, 곡 목록 중 하나를 입력해 주세요.", true);
     return;
   }
 
@@ -350,8 +362,12 @@ function saveCurrentPlaylist() {
   }
 
   activePlaylistId = snapshot.id;
-  setSavedPlaylists(playlists);
+  if (!setSavedPlaylists(playlists)) {
+    return;
+  }
+
   playlistName.value = snapshot.name;
+  setSaveStatus(`"${snapshot.name}" 저장 완료`);
   setStatus(`"${snapshot.name}" 플레이리스트를 저장했습니다.`);
 }
 
@@ -381,6 +397,7 @@ function loadSavedPlaylist(id) {
 
   render();
   renderSavedPlaylists();
+  setSaveStatus(`"${playlist.name}" 불러오기 완료`);
   setStatus(`"${playlist.name}" 플레이리스트를 불러왔습니다.`);
 }
 
@@ -402,6 +419,7 @@ function deleteSavedPlaylist(id) {
   }
 
   setSavedPlaylists(playlists.filter((item) => item.id !== id));
+  setSaveStatus(`"${playlist.name}" 삭제 완료`);
   setStatus(`"${playlist.name}" 저장본을 삭제했습니다.`);
 }
 
@@ -509,6 +527,7 @@ clearAll.addEventListener("click", () => {
   playlistMemo.value = "";
   render();
   renderSavedPlaylists();
+  setSaveStatus("저장하면 아래 목록에 바로 표시됩니다.");
   setStatus("목록을 비웠습니다.");
 });
 
