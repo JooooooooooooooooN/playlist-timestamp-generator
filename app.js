@@ -525,10 +525,11 @@ clearAll.addEventListener("click", () => {
   activePlaylistId = null;
   playlistName.value = "";
   playlistMemo.value = "";
+  fileInput.value = "";
   render();
   renderSavedPlaylists();
   setSaveStatus("저장하면 아래 목록에 바로 표시됩니다.");
-  setStatus("목록을 비웠습니다.");
+  setStatus("이전 작업 내용을 비웠습니다.");
 });
 
 renderSavedPlaylists();
