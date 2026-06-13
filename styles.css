@@ -189,6 +189,33 @@ h1 {
   padding: 16px;
 }
 
+.save-panel {
+  padding-bottom: 18px;
+}
+
+.save-grid {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(180px, 1fr) auto;
+  gap: 12px;
+  align-items: end;
+  padding: 8px 18px 14px;
+}
+
+.save-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.memo-field {
+  padding: 0 18px;
+}
+
+.memo-field textarea {
+  width: 100%;
+  min-height: 92px;
+  margin: 0;
+}
+
 label {
   display: grid;
   gap: 6px;
@@ -279,7 +306,7 @@ button.secondary:hover {
 
 table {
   width: 100%;
-  min-width: 760px;
+  min-width: 940px;
   border-collapse: collapse;
   table-layout: fixed;
 }
@@ -303,19 +330,20 @@ td:nth-child(1) {
   width: 80px;
 }
 
-th:nth-child(3),
-td:nth-child(3),
 th:nth-child(4),
-td:nth-child(4) {
+td:nth-child(4),
+th:nth-child(5),
+td:nth-child(5) {
   width: 112px;
 }
 
-th:nth-child(5),
-td:nth-child(5) {
+th:nth-child(6),
+td:nth-child(6) {
   width: 196px;
 }
 
-.title-input {
+.title-input,
+.note-input {
   width: 100%;
 }
 
@@ -425,6 +453,18 @@ textarea {
   label,
   .toolbar button {
     width: 100%;
+  }
+
+  .save-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .save-actions {
+    flex-wrap: wrap;
+  }
+
+  .save-actions button {
+    flex: 1 1 120px;
   }
 
   .section-title {

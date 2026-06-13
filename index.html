@@ -73,6 +73,40 @@
           <button class="secondary" type="button" id="clearAll">초기화</button>
         </div>
 
+        <section class="panel save-panel">
+          <div class="section-title">
+            <div>
+              <h2>내 플레이리스트 저장</h2>
+              <p>저장한 내용은 현재 브라우저에만 보관됩니다.</p>
+            </div>
+          </div>
+
+          <div class="save-grid">
+            <label>
+              플레이리스트 이름
+              <input id="playlistName" type="text" placeholder="예: 2026-06 Suno Mix">
+            </label>
+
+            <label>
+              저장된 플레이리스트
+              <select id="savedPlaylistSelect" aria-label="저장된 플레이리스트">
+                <option value="">저장된 플레이리스트 없음</option>
+              </select>
+            </label>
+
+            <div class="save-actions">
+              <button type="button" id="savePlaylist">저장</button>
+              <button class="secondary" type="button" id="loadPlaylist">불러오기</button>
+              <button class="secondary" type="button" id="deletePlaylist">삭제</button>
+            </div>
+          </div>
+
+          <label class="memo-field">
+            전체 메모
+            <textarea id="playlistMemo" spellcheck="false" placeholder="예: 새벽 감성 믹스, 썸네일은 파스텔톤"></textarea>
+          </label>
+        </section>
+
         <section class="panel" aria-live="polite">
           <div class="section-title">
             <h2>플레이리스트</h2>
@@ -85,6 +119,7 @@
                 <tr>
                   <th>순서</th>
                   <th>제목</th>
+                  <th>메모</th>
                   <th>길이</th>
                   <th>시작</th>
                   <th>관리</th>
@@ -92,7 +127,7 @@
               </thead>
               <tbody id="trackList">
                 <tr class="empty-row">
-                  <td colspan="5">오디오 파일을 넣으면 여기에 목록이 생깁니다.</td>
+                  <td colspan="6">오디오 파일을 넣으면 여기에 목록이 생깁니다.</td>
                 </tr>
               </tbody>
             </table>

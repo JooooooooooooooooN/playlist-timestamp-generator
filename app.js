@@ -12,6 +12,14 @@ const offsetInput = document.querySelector("#offsetInput");
 const formatSelect = document.querySelector("#formatSelect");
 const includeRepeat = document.querySelector("#includeRepeat");
 const repeatLabel = document.querySelector("#repeatLabel");
+const playlistName = document.querySelector("#playlistName");
+const playlistMemo = document.querySelector("#playlistMemo");
+const savedPlaylistSelect = document.querySelector("#savedPlaylistSelect");
+const savePlaylist = document.querySelector("#savePlaylist");
+const loadPlaylist = document.querySelector("#loadPlaylist");
+const deletePlaylist = document.querySelector("#deletePlaylist");
+
+const storageKey = "playlistTimestampGenerator.savedPlaylists.v1";
 
 const sampleTracks = [
   { title: "Silver Bloom", duration: 133 },
@@ -27,6 +35,37 @@ const sampleTracks = [
 
 let tracks = [];
 let audioContext;
+
+function getSavedPlaylists() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(storageKey) || "[]");
+    return Array.isArray(saved) ? saved : [];
+  } catch (error) {
+    return [];
+  }
+}
+
+function setSavedPlaylists(playlists) {
+  localStorage.setItem(storageKey, JSON.stringify(playlists));
+  renderSavedPlaylists();
+}
+
+function renderSavedPlaylists(selectedId = savedPlaylistSelect.value) {
+  const playlists = getSavedPlaylists();
+
+  if (playlists.length === 0) {
+    savedPlaylistSelect.innerHTML = '<option value="">저장된 플레이리스트 없음</option>';
+    return;
+  }
+
+  savedPlaylistSelect.innerHTML = playlists
+    .map((playlist) => `<option value="${escapeHtml(playlist.id)}">${escapeHtml(playlist.name)}</option>`)
+    .join("");
+
+  if (playlists.some((playlist) => playlist.id === selectedId)) {
+    savedPlaylistSelect.value = selectedId;
+  }
+}
 
 function getAudioContext() {
   if (!audioContext) {
@@ -132,7 +171,7 @@ function setStatus(message, isError = false) {
 
 function render() {
   if (tracks.length === 0) {
-    trackList.innerHTML = '<tr class="empty-row"><td colspan="5">오디오 파일을 넣으면 여기에 목록이 생깁니다.</td></tr>';
+    trackList.innerHTML = '<tr class="empty-row"><td colspan="6">오디오 파일을 넣으면 여기에 목록이 생깁니다.</td></tr>';
     summary.textContent = "아직 추가된 오디오 파일이 없습니다.";
     outputText.value = "";
     return;
@@ -157,6 +196,17 @@ function render() {
               data-action="title"
               data-index="${index}"
               aria-label="${index + 1}번 제목"
+            >
+          </td>
+          <td>
+            <input
+              class="note-input"
+              type="text"
+              value="${escapeHtml(track.note || "")}"
+              data-action="note"
+              data-index="${index}"
+              aria-label="${index + 1}번 메모"
+              placeholder="메모"
             >
           </td>
           <td class="time">${formatTime(track.duration)}</td>
@@ -198,6 +248,7 @@ async function addFiles(fileList) {
         id: createId(),
         title: cleanTitle(file.name),
         duration,
+        note: "",
         fileName: file.name,
       });
     } catch (error) {
@@ -224,6 +275,7 @@ function loadSampleTracks() {
     id: createId(),
     title: track.title,
     duration: track.duration,
+    note: "",
     fileName: `${track.title}.mp3`,
   }));
 
@@ -231,8 +283,105 @@ function loadSampleTracks() {
   setStatus("샘플 플레이리스트를 불러왔습니다.");
 }
 
+function getCurrentPlaylistName() {
+  return playlistName.value.trim() || `Playlist ${new Date().toLocaleDateString("ko-KR")}`;
+}
+
+function createPlaylistSnapshot(existingId) {
+  const now = new Date().toISOString();
+
+  return {
+    id: existingId || createId(),
+    name: getCurrentPlaylistName(),
+    memo: playlistMemo.value,
+    updatedAt: now,
+    settings: {
+      offset: offsetInput.value,
+      format: formatSelect.value,
+      includeRepeat: includeRepeat.checked,
+      repeatLabel: repeatLabel.value,
+    },
+    tracks: tracks.map((track) => ({
+      title: track.title,
+      duration: track.duration,
+      note: track.note || "",
+      fileName: track.fileName || "",
+    })),
+  };
+}
+
+function saveCurrentPlaylist() {
+  if (tracks.length === 0 && !playlistMemo.value.trim()) {
+    setStatus("저장할 플레이리스트나 메모가 없습니다.", true);
+    return;
+  }
+
+  const playlists = getSavedPlaylists();
+  const selectedId = savedPlaylistSelect.value;
+  const existingIndex = playlists.findIndex((playlist) => playlist.id === selectedId);
+  const snapshot = createPlaylistSnapshot(existingIndex >= 0 ? selectedId : undefined);
+
+  if (existingIndex >= 0) {
+    playlists[existingIndex] = snapshot;
+  } else {
+    playlists.unshift(snapshot);
+  }
+
+  setSavedPlaylists(playlists);
+  savedPlaylistSelect.value = snapshot.id;
+  setStatus(`"${snapshot.name}" 플레이리스트를 저장했습니다.`);
+}
+
+function loadSelectedPlaylist() {
+  const playlists = getSavedPlaylists();
+  const playlist = playlists.find((item) => item.id === savedPlaylistSelect.value);
+
+  if (!playlist) {
+    setStatus("불러올 저장된 플레이리스트가 없습니다.", true);
+    return;
+  }
+
+  playlistName.value = playlist.name || "";
+  playlistMemo.value = playlist.memo || "";
+  offsetInput.value = playlist.settings?.offset || "00:00";
+  formatSelect.value = playlist.settings?.format || "space";
+  includeRepeat.checked = playlist.settings?.includeRepeat !== false;
+  repeatLabel.value = playlist.settings?.repeatLabel || "repeat";
+  tracks = (playlist.tracks || []).map((track) => ({
+    id: createId(),
+    title: track.title || "",
+    duration: Number(track.duration) || 0,
+    note: track.note || "",
+    fileName: track.fileName || "",
+  }));
+
+  render();
+  setStatus(`"${playlist.name}" 플레이리스트를 불러왔습니다.`);
+}
+
+function deleteSelectedPlaylist() {
+  const selectedId = savedPlaylistSelect.value;
+  const playlists = getSavedPlaylists();
+  const playlist = playlists.find((item) => item.id === selectedId);
+
+  if (!playlist) {
+    setStatus("삭제할 저장된 플레이리스트가 없습니다.", true);
+    return;
+  }
+
+  if (!window.confirm(`"${playlist.name}" 저장본을 삭제할까요?`)) {
+    return;
+  }
+
+  setSavedPlaylists(playlists.filter((item) => item.id !== selectedId));
+  setStatus(`"${playlist.name}" 저장본을 삭제했습니다.`);
+}
+
 pickFiles.addEventListener("click", () => fileInput.click());
 loadSample.addEventListener("click", loadSampleTracks);
+savePlaylist.addEventListener("click", saveCurrentPlaylist);
+loadPlaylist.addEventListener("click", loadSelectedPlaylist);
+deletePlaylist.addEventListener("click", deleteSelectedPlaylist);
 
 fileInput.addEventListener("change", (event) => {
   addFiles(event.target.files);
@@ -255,12 +404,16 @@ dropZone.addEventListener("drop", (event) => {
 });
 
 trackList.addEventListener("input", (event) => {
-  if (event.target.dataset.action !== "title") {
-    return;
+  const index = Number(event.target.dataset.index);
+
+  if (event.target.dataset.action === "title") {
+    tracks[index].title = event.target.value;
+    outputText.value = getOutputLines().join("\n");
   }
 
-  tracks[Number(event.target.dataset.index)].title = event.target.value;
-  outputText.value = getOutputLines().join("\n");
+  if (event.target.dataset.action === "note") {
+    tracks[index].note = event.target.value;
+  }
 });
 
 trackList.addEventListener("click", (event) => {
@@ -310,8 +463,11 @@ copyOutput.addEventListener("click", async () => {
 
 clearAll.addEventListener("click", () => {
   tracks = [];
+  playlistName.value = "";
+  playlistMemo.value = "";
   render();
   setStatus("목록을 비웠습니다.");
 });
 
+renderSavedPlaylists();
 render();
